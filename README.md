@@ -1,8 +1,9 @@
 # YotogiCamControl (StayFuckingHard)
-[![Watch the video](https://img.ifunny.co/images/05175658e390234731309324021200003009653068_1.jpg)](https://img.ifunny.co/videos/f5502ffd1bd8ebe9bd143ca8cb9325c747cac7463c503c4f39fccdf5eec3f0b7_1.mp4)
+[![Stay Hard Video](path/to/koala_thumb.jpg)](https://img.ifunny.co/videos/f5502ffd1bd8ebe9bd143ca8cb9325c747cac7463c503c4f39fccdf5eec3f0b7_1.mp4)
 
 
 Philosophy Developed under the doctrine of "Stay Hard." This plugin was engineered to solve 10-year-old engine limitations (like Maid Swapping) through sheer brute force and discipline.
+It allows you to swap maids during harem yotogi for skills that are not supposed to swapped, the maids are treated as their own personality and say their own voicelines related to the skills.
 
 ## Features
 
