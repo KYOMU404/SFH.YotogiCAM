@@ -1,6 +1,8 @@
 # YotogiCamControl (StayFuckingHard)
+[![Watch the video](https://img.ifunny.co/images/05175658e390234731309324021200003009653068_1.jpg)](https://img.ifunny.co/videos/f5502ffd1bd8ebe9bd143ca8cb9325c747cac7463c503c4f39fccdf5eec3f0b7_1.mp4)
 
-A comprehensive plugin for **Custom Maid 3D 2 (COM3D2)** that enhances your Yotogi experience with advanced camera controls, scene lighting, prop management, and body reactions.
+
+Philosophy Developed under the doctrine of "Stay Hard." This plugin was engineered to solve 10-year-old engine limitations (like Maid Swapping) through sheer brute force and discipline.
 
 ## Features
 
@@ -30,7 +32,7 @@ A comprehensive plugin for **Custom Maid 3D 2 (COM3D2)** that enhances your Yoto
 *   **Body Reactions**: Dynamic sweat, nipple erection, clitoris erection, and blushing based on the maid's excitement level.
 
 ### 6. Maid Swap & LookAt
-*   **Swap**: Swap the main maid with any other maid in the scene, transferring state and position.
+*   **Swap**: Swap the main maid with any other maid in the scene, transferring state and position. You have to select the same yotogi position again or another position.
 *   **LookAt**: Force the maid to look at specific targets: Main Camera, Sub-screens, Master, or other Maids.
 
 ### 7. Video Player (Overlay)
