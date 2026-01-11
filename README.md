@@ -3,7 +3,7 @@
 
 
 Philosophy Developed under the doctrine of "Stay Hard." This plugin was engineered to solve 10-year-old engine limitations (like Maid Swapping) through sheer brute force and discipline.
-It allows you to swap maids during harem yotogi for skills that are not supposed to swapped, the maids are treated as their own personality and say their own voicelines related to the skills.
+It allows you to swap maids during harem yotogi for skills that are not supposed to be swapped, the maids are treated as their own personality and say their own voicelines related to the skills. 
 
 ## Features
 
