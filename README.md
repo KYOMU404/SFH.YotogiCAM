@@ -24,7 +24,7 @@ It allows you to swap maids during harem yotogi for skills that are not supposed
 ### 4. Prop TV
 *   **Spawn TV**: Spawns the in-game monitor prop (`Odogu_ShinShitsumu_Monitor`).
 *   **Transform**: Move and rotate the TV freely using sliders or text input.
-*   **Video Playback**: Load and play video files from your computer directly onto the TV prop.
+*   **Video Playback**: Load and play video files from your computer directly onto the TV prop. You can use .ine files for COM3D2
 *   **Profiles**: Save and load TV positions and video paths.
 
 ### 5. Kiss & Body Reactions
