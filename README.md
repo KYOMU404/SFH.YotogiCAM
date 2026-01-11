@@ -51,8 +51,8 @@ Without this file, the sweat sliders/automation may not be visible or functional
 ## Installation
 
 1.  Ensure you have **BepInEx** installed for COM3D2.
-2.  Place the `StayFuckingHard.dll` (or compiled plugin file) into your `BepInEx/plugins` folder.
-3.  (Optional) Install the sweat textures mentioned above into your game's `Mod` folder.
+2.  Place the `COM3D2.SFH.YotogiCAM.Plugin` (or compiled plugin file) into your `BepInEx/plugins` folder.
+3.  (Optional) Install the sweat textures mentioned above into your game's `Mod` folder. Equip the sweat props to your maids.
 
 ## Usage
 
