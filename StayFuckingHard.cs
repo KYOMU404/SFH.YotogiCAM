@@ -12,7 +12,7 @@ using System.Xml.Serialization;
 
 namespace COM3D2.YotogiCamControl.Plugin
 {
-    [BepInPlugin("com.stay.fucking.hard", "YotogiCamControl", "1.7.0")]
+    [BepInPlugin("com.stay.fucking.hard", "YotogiCamControl", "1.7.1")]
     public class YotogiCamControl : BaseUnityPlugin
     {
         private bool isGuiActive = false;
@@ -160,7 +160,7 @@ namespace COM3D2.YotogiCamControl.Plugin
 
             UpdateLookAt();
             
-            // Animation Speed
+            // Animation Speed & Ahe Morph
             if (syncAnimationSpeed && GameMain.Instance != null && GameMain.Instance.CharacterMgr != null)
             {
                 CharacterMgr charMgr = GameMain.Instance.CharacterMgr;
@@ -174,6 +174,20 @@ namespace COM3D2.YotogiCamControl.Plugin
                         {
                             anim[m.body0.LastAnimeFN].speed = animationSpeed / 100f;
                         }
+
+                        // Ahe Morph Logic: 100 speed = 0, 130 speed = 30 (mapped to 0.3)
+                        if (animationSpeed >= 100f)
+                        {
+                            float aheVal = (animationSpeed - 100f) / 100f; 
+                            if (m.body0.Face != null && m.body0.Face.morph != null)
+                            {
+                                TMorph morph = m.body0.Face.morph;
+                                if (morph.hash.ContainsKey("ahe"))
+                                {
+                                    morph.SetBlendValues((int)morph.hash["ahe"], aheVal);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -181,6 +195,7 @@ namespace COM3D2.YotogiCamControl.Plugin
             kissManager.Update();
             bodyReactionManager.Update();
             propTVManager.Update();
+            faceManager.Update();
         }
 
         public void OnGUI()
@@ -309,7 +324,8 @@ namespace COM3D2.YotogiCamControl.Plugin
             GUILayout.Space(5);
             GUILayout.BeginVertical("box");
             GUILayout.Label("Animation");
-            DrawSliderWithReset("Speed %", ref animationSpeed, 0f, 500f, 100f, "F0");
+            // Max speed capped to 130 per instructions
+            DrawSliderWithReset("Speed %", ref animationSpeed, 0f, 130f, 100f, "F0");
             syncAnimationSpeed = GUILayout.Toggle(syncAnimationSpeed, "Sync Animation Speed");
             GUILayout.EndVertical();
         }
@@ -481,6 +497,7 @@ namespace COM3D2.YotogiCamControl.Plugin
             public bool faceEnabled, chestEnabled, pelvisEnabled;
             public float faceSize, chestSize, pelvisSize;
             public CamSetting faceSet, chestSet, pelvisSet;
+            public bool eyesOnly;
         }
 
         private void DrawLookAtTab()
@@ -500,6 +517,11 @@ namespace COM3D2.YotogiCamControl.Plugin
                     MaidScreenSet currentSet = maidScreens[actualMaidIndex];
                     
                     GUILayout.BeginVertical("box");
+                    
+                    // Eyes Only Toggle
+                    bool newEyesOnly = GUILayout.Toggle(currentSet.eyesOnly, "Eyes Only (No Head Movement)");
+                    if (newEyesOnly != currentSet.eyesOnly) currentSet.eyesOnly = newEyesOnly;
+                    
                     GUILayout.Label($"Target for Maid {actualMaidIndex}:");
 
                     bool isLocked = currentSet.lookAtType != LookAtType.None;
@@ -596,8 +618,17 @@ namespace COM3D2.YotogiCamControl.Plugin
                 if (target != null)
                 {
                     maid.body0.trsLookTarget = target;
-                    maid.body0.boHeadToCam = true;
-                    maid.body0.boEyeToCam = true;
+                    
+                    if (set.eyesOnly)
+                    {
+                        maid.body0.boHeadToCam = false;
+                        maid.body0.boEyeToCam = true;
+                    }
+                    else
+                    {
+                        maid.body0.boHeadToCam = true;
+                        maid.body0.boEyeToCam = true;
+                    }
                 }
             }
         }
@@ -1340,6 +1371,7 @@ namespace COM3D2.YotogiCamControl.Plugin
             private Vector3 currentRot = new Vector3(0f, -38f, 0f); // Default from script
             private string profileName = "tv_default";
             private string statusMsg = "";
+            private bool shouldBeSpawned = false;
 
             public PropTVManager(YotogiCamControl plugin)
             {
@@ -1355,14 +1387,25 @@ namespace COM3D2.YotogiCamControl.Plugin
                         monitorControl = tvObject.GetComponentInChildren<ShitsumuRoomMonitorControl>();
                     }
                     
-                    // Sync position if changed via script/game (optional) or enforce from UI
-                    // For now, we assume UI drives the object.
-                    
-                    // If object was destroyed (e.g. scene change)
                     if (tvObject == null || tvObject.Equals(null))
                     {
                         tvObject = null;
                         monitorControl = null;
+                    }
+                }
+                
+                // Persistence Logic: Respawn if it was supposed to be there but isn't
+                if (shouldBeSpawned && tvObject == null)
+                {
+                    // Check if we are in a valid state to spawn (e.g. Yotogi or Room)
+                    // GameMain.Instance.BgMgr should be present
+                    if (GameMain.Instance.BgMgr != null)
+                    {
+                         SpawnTV();
+                         if (tvObject != null && !string.IsNullOrEmpty(currentVideoPath))
+                         {
+                             LoadVideo(currentVideoPath);
+                         }
                     }
                 }
             }
@@ -1421,6 +1464,12 @@ namespace COM3D2.YotogiCamControl.Plugin
                     if (GUILayout.Button("Pause")) { if(monitorControl) monitorControl.Pause(); }
                     if (GUILayout.Button("Stop")) { if(monitorControl) monitorControl.Stop(); }
                     GUILayout.EndHorizontal();
+                    
+                    // Next / Prev Buttons
+                    GUILayout.BeginHorizontal();
+                    if (GUILayout.Button("<< Prev Video")) PlayNextVideo(false);
+                    if (GUILayout.Button("Next Video >>")) PlayNextVideo(true);
+                    GUILayout.EndHorizontal();
                 }
 
                 GUILayout.Space(10);
@@ -1434,6 +1483,41 @@ namespace COM3D2.YotogiCamControl.Plugin
                 if(!string.IsNullOrEmpty(statusMsg)) GUILayout.Label(statusMsg);
 
                 GUILayout.EndVertical();
+            }
+            
+            private void PlayNextVideo(bool next)
+            {
+                if (string.IsNullOrEmpty(currentVideoPath)) return;
+                
+                try 
+                {
+                    string dir = Path.GetDirectoryName(currentVideoPath);
+                    if (!Directory.Exists(dir)) return;
+                    
+                    string[] filters = { ".mp4", ".avi", ".mkv", ".mov", ".webm", ".ine" };
+                    string[] files = Directory.GetFiles(dir)
+                        .Where(f => filters.Contains(Path.GetExtension(f).ToLower()))
+                        .OrderBy(f => f)
+                        .ToArray();
+                        
+                    if (files.Length == 0) return;
+                    
+                    int index = Array.IndexOf(files, currentVideoPath);
+                    if (index == -1) index = 0;
+                    else 
+                    {
+                        if (next) index++; else index--;
+                        if (index >= files.Length) index = 0;
+                        if (index < 0) index = files.Length - 1;
+                    }
+                    
+                    currentVideoPath = files[index];
+                    LoadVideo(currentVideoPath);
+                }
+                catch (Exception ex)
+                {
+                    statusMsg = "Next/Prev Error: " + ex.Message;
+                }
             }
 
             private void DrawVector3Control(string prefix, ref Vector3 vec, float min, float max)
@@ -1485,6 +1569,7 @@ namespace COM3D2.YotogiCamControl.Plugin
                     else
                     {
                         statusMsg = "Spawned TV Prop.";
+                        shouldBeSpawned = true;
                     }
                 }
                 else
@@ -1501,6 +1586,7 @@ namespace COM3D2.YotogiCamControl.Plugin
                 GameMain.Instance.BgMgr.DelPrefabFromBg("YotogiTVProp");
                 tvObject = null;
                 monitorControl = null;
+                shouldBeSpawned = false;
                 statusMsg = "Removed TV Prop.";
             }
 
@@ -1573,11 +1659,7 @@ namespace COM3D2.YotogiCamControl.Plugin
                     }
                     else
                     {
-                        // Auto spawn on load? Maybe better to let user click spawn.
-                        // But let's spawn it for convenience.
                         SpawnTV();
-                        // LoadVideo is called in SpawnTV if we move lines, but SpawnTV uses currentPos/Rot.
-                        // We need to load video after spawn.
                         if(!string.IsNullOrEmpty(currentVideoPath)) LoadVideo(currentVideoPath);
                     }
 
@@ -1626,6 +1708,8 @@ namespace COM3D2.YotogiCamControl.Plugin
 
             public LookAtType lookAtType = LookAtType.None;
             public int lookAtTargetIndex = -1;
+            
+            public bool eyesOnly = false; // Added Eyes Only
 
             private int maidIndex;
 
@@ -1674,7 +1758,8 @@ namespace COM3D2.YotogiCamControl.Plugin
                 return new MaidProfileData {
                     faceEnabled = faceEnabled, chestEnabled = chestEnabled, pelvisEnabled = pelvisEnabled,
                     faceSize = faceSize, chestSize = chestSize, pelvisSize = pelvisSize,
-                    faceSet = faceSet, chestSet = chestSet, pelvisSet = pelvisSet
+                    faceSet = faceSet, chestSet = chestSet, pelvisSet = pelvisSet,
+                    eyesOnly = eyesOnly
                 };
             }
 
@@ -1683,6 +1768,7 @@ namespace COM3D2.YotogiCamControl.Plugin
                 faceEnabled = data.faceEnabled; chestEnabled = data.chestEnabled; pelvisEnabled = data.pelvisEnabled;
                 faceSize = data.faceSize; chestSize = data.chestSize; pelvisSize = data.pelvisSize;
                 faceSet = data.faceSet; chestSet = data.chestSet; pelvisSet = data.pelvisSet;
+                eyesOnly = data.eyesOnly;
                 layoutInitialized = false;
             }
 
@@ -1851,11 +1937,36 @@ namespace COM3D2.YotogiCamControl.Plugin
             private Vector2 scrollPos;
             private int selectedMaidIndex = 0;
             private bool[] categoryFoldouts;
+            
+            // Locking State
+            private Dictionary<int, string> lockedFaces = new Dictionary<int, string>();
 
             public FaceManager()
             {
                 categoryFoldouts = new bool[categories.Count];
                 for(int i=0; i<categoryFoldouts.Length; i++) categoryFoldouts[i] = true;
+            }
+
+            public void Update()
+            {
+                if (GameMain.Instance == null || GameMain.Instance.CharacterMgr == null) return;
+                
+                foreach(var kvp in lockedFaces)
+                {
+                    Maid m = GameMain.Instance.CharacterMgr.GetMaid(kvp.Key);
+                    if (m != null && m.Visible)
+                    {
+                        string faceName = kvp.Value;
+                        if (faceName.Contains("頬") || faceName.Contains("涙") || faceName.Contains("よだれ"))
+                        {
+                            m.FaceBlend(faceName);
+                        }
+                        else
+                        {
+                            m.FaceAnime(faceName, 1f, 0);
+                        }
+                    }
+                }
             }
 
             public void DrawUI()
@@ -1879,6 +1990,20 @@ namespace COM3D2.YotogiCamControl.Plugin
                     }
                 }
                 GUILayout.EndHorizontal();
+
+                // Revert/Unlock Button
+                if (GUILayout.Button("Revert / Unlock Face (Default Game State)"))
+                {
+                    if (lockedFaces.ContainsKey(selectedMaidIndex)) lockedFaces.Remove(selectedMaidIndex);
+                    // Reset to default
+                    Maid m = GameMain.Instance.CharacterMgr.GetMaid(selectedMaidIndex);
+                    if (m != null) m.FaceAnime("通常", 1f, 0);
+                }
+                
+                if (lockedFaces.ContainsKey(selectedMaidIndex))
+                {
+                    GUILayout.Label($"[LOCKED]: {lockedFaces[selectedMaidIndex]}");
+                }
 
                 scrollPos = GUILayout.BeginScrollView(scrollPos);
                 GUILayout.BeginVertical();
@@ -1926,6 +2051,9 @@ namespace COM3D2.YotogiCamControl.Plugin
                 Maid m = GameMain.Instance.CharacterMgr.GetMaid(selectedMaidIndex);
                 if (m != null)
                 {
+                    // Lock it
+                    lockedFaces[selectedMaidIndex] = faceName;
+
                     if (faceName.Contains("頬") || faceName.Contains("涙") || faceName.Contains("よだれ"))
                     {
                         m.FaceBlend(faceName);
