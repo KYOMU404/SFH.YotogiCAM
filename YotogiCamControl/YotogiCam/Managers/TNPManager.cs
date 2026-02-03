@@ -15,6 +15,7 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
         };
 
         private string statusMessage = "";
+        private int selectedManIndex = 0;
 
         public TNPManager(YotogiCamControl plugin)
         {
@@ -33,17 +34,48 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
                 return;
             }
 
-            // Get the Man (Maid 0 is usually male in yotogi if configured, but GetMan(0) is safer)
-            Maid man = GameMain.Instance.CharacterMgr.GetMan(0);
-
-            if (man == null)
+            // Man Selector
+            int manCount = GameMain.Instance.CharacterMgr.GetManCount();
+            if (manCount == 0)
             {
-                GUILayout.Label("No Man found in scene.");
+                GUILayout.Label("No Men found in scene.");
                 GUILayout.EndVertical();
                 return;
             }
 
-            GUILayout.Label("Select Model:");
+            GUILayout.Label("Select Man:");
+
+            // Build list of valid men
+            System.Collections.Generic.List<int> validIndices = new System.Collections.Generic.List<int>();
+            System.Collections.Generic.List<string> manNames = new System.Collections.Generic.List<string>();
+
+            for(int i=0; i<manCount; i++)
+            {
+                Maid m = GameMain.Instance.CharacterMgr.GetMan(i);
+                if (m != null && m.body0 != null)
+                {
+                    validIndices.Add(i);
+                    string name = !string.IsNullOrEmpty(m.status.fullNameEnStyle) ? m.status.fullNameEnStyle : "Man " + i;
+                    manNames.Add(name);
+                }
+            }
+
+            if (validIndices.Count == 0)
+            {
+                GUILayout.Label("No valid Men loaded.");
+                GUILayout.EndVertical();
+                return;
+            }
+
+            if (selectedManIndex >= validIndices.Count) selectedManIndex = 0;
+            selectedManIndex = GUILayout.Toolbar(selectedManIndex, manNames.ToArray());
+
+            int realManIndex = validIndices[selectedManIndex];
+            Maid man = GameMain.Instance.CharacterMgr.GetMan(realManIndex);
+
+            GUILayout.Space(5);
+            GUILayout.Label($"Target: {man.status.fullNameEnStyle}");
+            GUILayout.Label("Select Penis Model:");
 
             foreach (string modelMenu in penisModels)
             {
