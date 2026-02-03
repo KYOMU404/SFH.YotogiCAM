@@ -191,10 +191,6 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
         private void LogAllCharacters()
         {
             Debug.Log("[YotogiCamControl] --- Character Dump ---");
-            if (GameMain.Instance.CMSystem != null)
-            {
-                Debug.Log("Player Name (CMSystem): " + GameMain.Instance.CMSystem.PlayerName);
-            }
             CharacterMgr cm = GameMain.Instance.CharacterMgr;
             for(int i=0; i<cm.GetManCount(); i++)
             {
