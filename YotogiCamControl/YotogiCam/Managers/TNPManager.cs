@@ -191,6 +191,10 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
         private void LogAllCharacters()
         {
             Debug.Log("[YotogiCamControl] --- Character Dump ---");
+            if (GameMain.Instance.CMSystem != null)
+            {
+                Debug.Log("Player Name (CMSystem): " + GameMain.Instance.CMSystem.PlayerName);
+            }
             CharacterMgr cm = GameMain.Instance.CharacterMgr;
             for(int i=0; i<cm.GetManCount(); i++)
             {
@@ -212,7 +216,7 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
             try
             {
                 // MAN Category moza corresponds to MPN.moza
-                Debug.Log($"[YotogiCamControl] TNP: Setting {menuFile} to Man {man.status.fullNameEnStyle}");
+                Debug.Log($"[YotogiCamControl] TNP: Setting {menuFile} to Man {GetBestName(man)}");
 
                 // SetProp(MPN mpn, string filename, int subPropId, bool temp)
                 man.SetProp(MPN.moza, menuFile, 0, false);
@@ -220,10 +224,10 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
                 // Force Update
                 man.AllProcProp();
 
-                // Ensure visibility
+                // Ensure visibility (FALSE means unmasked/visible)
                 if (man.body0 != null)
                 {
-                    man.body0.SetMask(TBody.SlotID.moza, true);
+                    man.body0.SetMask(TBody.SlotID.moza, false);
                     // Force rebuild of parts if needed
                     man.body0.FixMaskFlag();
                 }
