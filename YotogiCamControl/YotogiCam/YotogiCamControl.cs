@@ -74,7 +74,9 @@ namespace COM3D2.YotogiCamControl.Plugin
         private PropertyInfo saturationProp;
         private FieldInfo redChannelField, greenChannelField, blueChannelField;
         private MethodInfo updateTexturesMethod;
+#pragma warning disable 0414
         private bool reflectionInitialized = false;
+#pragma warning restore 0414
 
         // Screens
         private bool showScreens = true;
@@ -1153,7 +1155,7 @@ namespace COM3D2.YotogiCamControl.Plugin
 
             if (GameMain.Instance.MainCamera != null)
             {
-                if (colorCorrection == null)
+                if (!reflectionInitialized)
                 {
                     Component[] components = GameMain.Instance.MainCamera.GetComponents<MonoBehaviour>();
                     foreach (var c in components)
@@ -1170,6 +1172,7 @@ namespace COM3D2.YotogiCamControl.Plugin
                             break;
                         }
                     }
+                    reflectionInitialized = true;
                 }
 
                 if (colorCorrection != null)

@@ -84,12 +84,12 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
                 for (int i = 0; i < maidCount; i++)
                 {
                     Maid m = GameMain.Instance.CharacterMgr.GetMaid(i);
-                    if (m != null && m.body0 != null && m.boMan)
+                    if (m != null && m.body0 != null)
                     {
                         candidates.Add(m);
                         string name = !string.IsNullOrEmpty(m.status.fullNameEnStyle) ? m.status.fullNameEnStyle : "Maid " + i;
                         if (!m.Visible) name += " (Hidden)";
-                        candidateNames.Add("[F->M] " + name);
+                        candidateNames.Add("[Maid] " + name);
                     }
                 }
 
