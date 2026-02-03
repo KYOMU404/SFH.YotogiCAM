@@ -43,6 +43,11 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
             if (GUILayout.Button("Search", GUILayout.Width(60))) searchMode = true;
             GUILayout.EndHorizontal();
 
+            if (GUILayout.Button("Debug: Log All Characters"))
+            {
+                LogAllCharacters();
+            }
+
             Maid man = null;
 
             if (searchMode && !string.IsNullOrEmpty(searchName))
@@ -74,7 +79,7 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
                     if (m != null && m.body0 != null)
                     {
                         candidates.Add(m);
-                        string name = !string.IsNullOrEmpty(m.status.fullNameEnStyle) ? m.status.fullNameEnStyle : "Man " + i;
+                        string name = GetBestName(m) + " (Man " + i + ")";
                         if (!m.Visible) name += " (Hidden)";
                         candidateNames.Add("[M] " + name);
                     }
@@ -87,7 +92,7 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
                     if (m != null && m.body0 != null)
                     {
                         candidates.Add(m);
-                        string name = !string.IsNullOrEmpty(m.status.fullNameEnStyle) ? m.status.fullNameEnStyle : "Maid " + i;
+                        string name = GetBestName(m) + " (Maid " + i + ")";
                         if (!m.Visible) name += " (Hidden)";
                         candidateNames.Add("[Maid] " + name);
                     }
@@ -98,7 +103,12 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
                     if (selectedManIndex >= candidates.Count) selectedManIndex = 0;
 
                     GUILayout.Label("Select Character:");
-                    selectedManIndex = GUILayout.Toolbar(selectedManIndex, candidateNames.ToArray());
+                    // Use SelectionGrid if too many items
+                    if (candidateNames.Count > 6)
+                        selectedManIndex = GUILayout.SelectionGrid(selectedManIndex, candidateNames.ToArray(), 2);
+                    else
+                        selectedManIndex = GUILayout.Toolbar(selectedManIndex, candidateNames.ToArray());
+
                     man = candidates[selectedManIndex];
                 }
                 else
@@ -113,7 +123,7 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
             {
                 GUILayout.Space(5);
                 GUI.color = Color.green;
-                GUILayout.Label($"Target: {man.status.fullNameEnStyle} (Visible: {man.Visible})");
+                GUILayout.Label($"Target: {GetBestName(man)} (Visible: {man.Visible})");
                 GUI.color = Color.white;
 
                 GUILayout.Label("Select Penis Model:");
@@ -136,6 +146,15 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
             GUILayout.EndVertical();
         }
 
+        private string GetBestName(Maid m)
+        {
+            if (m == null || m.status == null) return "Unknown";
+            if (!string.IsNullOrEmpty(m.status.fullNameEnStyle)) return m.status.fullNameEnStyle;
+            if (!string.IsNullOrEmpty(m.status.fullNameJpStyle)) return m.status.fullNameJpStyle;
+            if (!string.IsNullOrEmpty(m.status.nickName)) return m.status.nickName;
+            return "No Name";
+        }
+
         private Maid FindMaidByName(string name)
         {
             if (string.IsNullOrEmpty(name)) return null;
@@ -143,23 +162,49 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
 
             CharacterMgr cm = GameMain.Instance.CharacterMgr;
 
+            // Helper to check
+            bool Check(Maid m) {
+                if (m == null || m.status == null) return false;
+                if (!string.IsNullOrEmpty(m.status.fullNameEnStyle) && m.status.fullNameEnStyle.ToLower().Contains(name)) return true;
+                if (!string.IsNullOrEmpty(m.status.fullNameJpStyle) && m.status.fullNameJpStyle.ToLower().Contains(name)) return true;
+                if (!string.IsNullOrEmpty(m.status.nickName) && m.status.nickName.ToLower().Contains(name)) return true;
+                if (!string.IsNullOrEmpty(m.status.firstName) && m.status.firstName.ToLower().Contains(name)) return true;
+                if (!string.IsNullOrEmpty(m.status.lastName) && m.status.lastName.ToLower().Contains(name)) return true;
+                return false;
+            }
+
             // Search Men
             for(int i=0; i<cm.GetManCount(); i++)
             {
-                Maid m = cm.GetMan(i);
-                if (m != null && !string.IsNullOrEmpty(m.status.fullNameEnStyle) && m.status.fullNameEnStyle.ToLower().Contains(name)) return m;
-                if (m != null && !string.IsNullOrEmpty(m.status.fullNameJpStyle) && m.status.fullNameJpStyle.ToLower().Contains(name)) return m;
+                if (Check(cm.GetMan(i))) return cm.GetMan(i);
             }
 
             // Search Maids
             for (int i = 0; i < cm.GetMaidCount(); i++)
             {
-                Maid m = cm.GetMaid(i);
-                if (m != null && !string.IsNullOrEmpty(m.status.fullNameEnStyle) && m.status.fullNameEnStyle.ToLower().Contains(name)) return m;
-                if (m != null && !string.IsNullOrEmpty(m.status.fullNameJpStyle) && m.status.fullNameJpStyle.ToLower().Contains(name)) return m;
+                if (Check(cm.GetMaid(i))) return cm.GetMaid(i);
             }
 
             return null;
+        }
+
+        private void LogAllCharacters()
+        {
+            Debug.Log("[YotogiCamControl] --- Character Dump ---");
+            CharacterMgr cm = GameMain.Instance.CharacterMgr;
+            for(int i=0; i<cm.GetManCount(); i++)
+            {
+                Maid m = cm.GetMan(i);
+                if (m != null) Debug.Log($"Man {i}: {GetBestName(m)} (Vis: {m.Visible})");
+                else Debug.Log($"Man {i}: NULL");
+            }
+            for(int i=0; i<cm.GetMaidCount(); i++)
+            {
+                Maid m = cm.GetMaid(i);
+                if (m != null) Debug.Log($"Maid {i}: {GetBestName(m)} (Vis: {m.Visible})");
+                else Debug.Log($"Maid {i}: NULL");
+            }
+            Debug.Log("[YotogiCamControl] ----------------------");
         }
 
         private void ChangePenisModel(Maid man, string menuFile)
