@@ -78,7 +78,7 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
                 // Ensure visibility
                 if (man.body0 != null)
                 {
-                    man.body0.SetMask(MPN.moza, true);
+                    man.body0.SetMask(TBody.SlotID.moza, true);
                     // Force rebuild of parts if needed
                     man.body0.FixMaskFlag();
                 }

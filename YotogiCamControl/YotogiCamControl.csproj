@@ -54,10 +54,6 @@
       <HintPath>Libs\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>Libs\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="BepInEx">
       <HintPath>Libs\BepInEx.dll</HintPath>
       <Private>False</Private>
