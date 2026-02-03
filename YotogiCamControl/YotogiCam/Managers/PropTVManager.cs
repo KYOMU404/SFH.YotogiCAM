@@ -18,6 +18,7 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
         private string profileName = "tv_default";
         private string statusMsg = "";
         private bool shouldBeSpawned = false;
+        private float volume = 1.0f;
 
         public PropTVManager(YotogiCamControl plugin)
         {
@@ -109,6 +110,18 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
                 if (GUILayout.Button("Play")) { if (monitorControl) monitorControl.Play(); }
                 if (GUILayout.Button("Pause")) { if (monitorControl) monitorControl.Pause(); }
                 if (GUILayout.Button("Stop")) { if (monitorControl) monitorControl.Stop(); }
+                GUILayout.EndHorizontal();
+
+                // Volume
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Volume", GUILayout.Width(50));
+                float newVol = GUILayout.HorizontalSlider(volume, 0f, 1f);
+                if (newVol != volume)
+                {
+                    volume = newVol;
+                    ApplyVolume();
+                }
+                GUILayout.Label(volume.ToString("F2"), GUILayout.Width(35));
                 GUILayout.EndHorizontal();
 
                 // Next / Prev Buttons
@@ -217,6 +230,7 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
                     statusMsg = "Spawned TV Prop.";
                     shouldBeSpawned = true;
                 }
+                ApplyVolume();
             }
             else
             {
@@ -242,6 +256,21 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
             {
                 bool success = monitorControl.LoadMovie(path, true);
                 statusMsg = success ? "Loaded video." : "Failed to load video.";
+                ApplyVolume();
+            }
+        }
+
+        private void ApplyVolume()
+        {
+            if (tvObject != null)
+            {
+                // Try AudioSource on root
+                AudioSource audio = tvObject.GetComponent<AudioSource>();
+                if (audio != null) audio.volume = volume;
+
+                // Try AudioSource in children
+                AudioSource[] audios = tvObject.GetComponentsInChildren<AudioSource>();
+                foreach(var a in audios) a.volume = volume;
             }
         }
 

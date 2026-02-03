@@ -50,28 +50,71 @@ namespace COM3D2.YotogiCamControl.Plugin.UI
             GUILayout.BeginVertical();
 
             GUILayout.BeginHorizontal();
+
+            // Drive Selection
+            if (GUILayout.Button("Drives", GUILayout.Width(60)))
+            {
+                currentDirectory = ""; // Special state to show drives
+                currentDirectories = null;
+                currentFiles = null;
+                try
+                {
+                    string[] drives = Directory.GetLogicalDrives();
+                    currentDirectories = drives;
+                }
+                catch {}
+            }
+
             if (GUILayout.Button("Root", GUILayout.Width(50)))
             {
-                currentDirectory = Directory.GetDirectoryRoot(Directory.GetCurrentDirectory());
-                Refresh();
+                try {
+                    currentDirectory = Directory.GetDirectoryRoot(Directory.GetCurrentDirectory());
+                    Refresh();
+                } catch {}
             }
             if (GUILayout.Button("Up", GUILayout.Width(50)))
             {
-                DirectoryInfo parent = Directory.GetParent(currentDirectory);
-                if (parent != null)
+                if (!string.IsNullOrEmpty(currentDirectory))
                 {
-                    currentDirectory = parent.FullName;
-                    Refresh();
+                    DirectoryInfo parent = Directory.GetParent(currentDirectory);
+                    if (parent != null)
+                    {
+                        currentDirectory = parent.FullName;
+                        Refresh();
+                    }
+                    else
+                    {
+                        // Maybe at root, go to drives
+                        currentDirectory = "";
+                        try {
+                            currentDirectories = Directory.GetLogicalDrives();
+                        } catch {}
+                        currentFiles = null;
+                    }
                 }
             }
-            GUILayout.Label(currentDirectory, GUILayout.ExpandWidth(true));
+            GUILayout.Label(string.IsNullOrEmpty(currentDirectory) ? "Select Drive" : currentDirectory, GUILayout.ExpandWidth(true));
             if (GUILayout.Button("X", GUILayout.Width(25))) onCancel();
             GUILayout.EndHorizontal();
 
             scrollPos = GUILayout.BeginScrollView(scrollPos);
 
+            GUI.backgroundColor = Color.cyan;
+            if (string.IsNullOrEmpty(currentDirectory) && currentDirectories != null)
+            {
+                foreach (var drive in currentDirectories)
+                {
+                    if (GUILayout.Button("[" + drive + "]"))
+                    {
+                        currentDirectory = drive;
+                        Refresh();
+                    }
+                }
+            }
+            GUI.backgroundColor = Color.white;
+
             GUI.backgroundColor = Color.yellow;
-            if (currentDirectories != null)
+            if (!string.IsNullOrEmpty(currentDirectory) && currentDirectories != null)
             {
                 foreach (var dir in currentDirectories)
                 {
