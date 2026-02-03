@@ -67,9 +67,22 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
             try
             {
                 // MAN Category moza corresponds to MPN.moza
+                Debug.Log($"[YotogiCamControl] TNP: Setting {menuFile} to Man {man.status.fullNameEnStyle}");
+
                 // SetProp(MPN mpn, string filename, int subPropId, bool temp)
                 man.SetProp(MPN.moza, menuFile, 0, false);
-                man.AllProcProp(); // Refresh properties to apply changes immediately
+
+                // Force Update
+                man.AllProcProp();
+
+                // Ensure visibility
+                if (man.body0 != null)
+                {
+                    man.body0.SetMask(MPN.moza, true);
+                    // Force rebuild of parts if needed
+                    man.body0.FixMaskFlag();
+                }
+
                 statusMessage = "Applied: " + menuFile;
             }
             catch (Exception ex)
