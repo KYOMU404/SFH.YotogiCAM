@@ -16,6 +16,8 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
 
         private string statusMessage = "";
         private int selectedManIndex = 0;
+        private string searchName = "Tovar";
+        private bool searchMode = false;
 
         public TNPManager(YotogiCamControl plugin)
         {
@@ -34,54 +36,94 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
                 return;
             }
 
-            // Man Selector
-            int manCount = GameMain.Instance.CharacterMgr.GetManCount();
-            if (manCount == 0)
+            // Search Mode Toggle
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Find Man Name:", GUILayout.Width(100));
+            searchName = GUILayout.TextField(searchName);
+            if (GUILayout.Button("Search", GUILayout.Width(60))) searchMode = true;
+            GUILayout.EndHorizontal();
+
+            Maid man = null;
+
+            if (searchMode && !string.IsNullOrEmpty(searchName))
             {
-                GUILayout.Label("No Men found in scene.");
-                GUILayout.EndVertical();
-                return;
-            }
-
-            GUILayout.Label("Select Man:");
-
-            // Build list of valid men
-            System.Collections.Generic.List<int> validIndices = new System.Collections.Generic.List<int>();
-            System.Collections.Generic.List<string> manNames = new System.Collections.Generic.List<string>();
-
-            for(int i=0; i<manCount; i++)
-            {
-                Maid m = GameMain.Instance.CharacterMgr.GetMan(i);
-                if (m != null && m.body0 != null)
+                man = FindMaidByName(searchName);
+                if (man == null)
                 {
-                    validIndices.Add(i);
-                    string name = !string.IsNullOrEmpty(m.status.fullNameEnStyle) ? m.status.fullNameEnStyle : "Man " + i;
-                    manNames.Add(name);
+                    GUILayout.Label("Character '" + searchName + "' not found.");
+                }
+                else
+                {
+                    GUILayout.Label("Found: " + man.status.fullNameEnStyle);
                 }
             }
 
-            if (validIndices.Count == 0)
+            if (man == null)
             {
-                GUILayout.Label("No valid Men loaded.");
-                GUILayout.EndVertical();
-                return;
+                // Fallback to Selector
+                int manCount = GameMain.Instance.CharacterMgr.GetManCount();
+                int maidCount = GameMain.Instance.CharacterMgr.GetMaidCount();
+
+                System.Collections.Generic.List<Maid> candidates = new System.Collections.Generic.List<Maid>();
+                System.Collections.Generic.List<string> candidateNames = new System.Collections.Generic.List<string>();
+
+                // Check Men
+                for (int i = 0; i < manCount; i++)
+                {
+                    Maid m = GameMain.Instance.CharacterMgr.GetMan(i);
+                    if (m != null && m.body0 != null)
+                    {
+                        candidates.Add(m);
+                        string name = !string.IsNullOrEmpty(m.status.fullNameEnStyle) ? m.status.fullNameEnStyle : "Man " + i;
+                        if (!m.Visible) name += " (Hidden)";
+                        candidateNames.Add("[M] " + name);
+                    }
+                }
+
+                // Check Maids (Sometimes men are loaded here in mods)
+                for (int i = 0; i < maidCount; i++)
+                {
+                    Maid m = GameMain.Instance.CharacterMgr.GetMaid(i);
+                    if (m != null && m.body0 != null && m.boMan)
+                    {
+                        candidates.Add(m);
+                        string name = !string.IsNullOrEmpty(m.status.fullNameEnStyle) ? m.status.fullNameEnStyle : "Maid " + i;
+                        if (!m.Visible) name += " (Hidden)";
+                        candidateNames.Add("[F->M] " + name);
+                    }
+                }
+
+                if (candidates.Count > 0)
+                {
+                    if (selectedManIndex >= candidates.Count) selectedManIndex = 0;
+
+                    GUILayout.Label("Select Character:");
+                    selectedManIndex = GUILayout.Toolbar(selectedManIndex, candidateNames.ToArray());
+                    man = candidates[selectedManIndex];
+                }
+                else
+                {
+                    GUILayout.Label("No male characters found.");
+                    GUILayout.EndVertical();
+                    return;
+                }
             }
 
-            if (selectedManIndex >= validIndices.Count) selectedManIndex = 0;
-            selectedManIndex = GUILayout.Toolbar(selectedManIndex, manNames.ToArray());
-
-            int realManIndex = validIndices[selectedManIndex];
-            Maid man = GameMain.Instance.CharacterMgr.GetMan(realManIndex);
-
-            GUILayout.Space(5);
-            GUILayout.Label($"Target: {man.status.fullNameEnStyle}");
-            GUILayout.Label("Select Penis Model:");
-
-            foreach (string modelMenu in penisModels)
+            if (man != null)
             {
-                if (GUILayout.Button(modelMenu))
+                GUILayout.Space(5);
+                GUI.color = Color.green;
+                GUILayout.Label($"Target: {man.status.fullNameEnStyle} (Visible: {man.Visible})");
+                GUI.color = Color.white;
+
+                GUILayout.Label("Select Penis Model:");
+
+                foreach (string modelMenu in penisModels)
                 {
-                    ChangePenisModel(man, modelMenu);
+                    if (GUILayout.Button(modelMenu))
+                    {
+                        ChangePenisModel(man, modelMenu);
+                    }
                 }
             }
 
@@ -92,6 +134,32 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
             }
 
             GUILayout.EndVertical();
+        }
+
+        private Maid FindMaidByName(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return null;
+            name = name.ToLower();
+
+            CharacterMgr cm = GameMain.Instance.CharacterMgr;
+
+            // Search Men
+            for(int i=0; i<cm.GetManCount(); i++)
+            {
+                Maid m = cm.GetMan(i);
+                if (m != null && !string.IsNullOrEmpty(m.status.fullNameEnStyle) && m.status.fullNameEnStyle.ToLower().Contains(name)) return m;
+                if (m != null && !string.IsNullOrEmpty(m.status.fullNameJpStyle) && m.status.fullNameJpStyle.ToLower().Contains(name)) return m;
+            }
+
+            // Search Maids
+            for (int i = 0; i < cm.GetMaidCount(); i++)
+            {
+                Maid m = cm.GetMaid(i);
+                if (m != null && !string.IsNullOrEmpty(m.status.fullNameEnStyle) && m.status.fullNameEnStyle.ToLower().Contains(name)) return m;
+                if (m != null && !string.IsNullOrEmpty(m.status.fullNameJpStyle) && m.status.fullNameJpStyle.ToLower().Contains(name)) return m;
+            }
+
+            return null;
         }
 
         private void ChangePenisModel(Maid man, string menuFile)
