@@ -32,7 +32,7 @@ namespace COM3D2.YotogiCamControl.Plugin
 
         // UI State
         private int activeTab = 0;
-        private string[] tabNames = { "Scene", "Screens", "Faces", "Kiss", "Video", "Prop TV", "VideoCam", "Swap", "LookAt", "Misc", "Masturbation", "Ahegao", "Kupa", "TNP" };
+        private string[] tabNames = { "Scene", "Screens", "Faces", "Kiss", "Video", "Prop TV", "VideoCam", "Swap", "LookAt", "Misc", "Masturbation", "Ahegao", "Kupa" };
         private bool showLighting = true;
         private bool showPostFX = true;
 
@@ -93,7 +93,6 @@ namespace COM3D2.YotogiCamControl.Plugin
         public MasturbationManager masturbationManager;
         public AhegaoManager ahegaoManager;
         public KupaManager kupaManager;
-        public TNPManager tnpManager;
 
         private List<MaidScreenSet> maidScreens = new List<MaidScreenSet>();
         private VideoScreen videoScreen;
@@ -141,7 +140,6 @@ namespace COM3D2.YotogiCamControl.Plugin
                 masturbationManager = new MasturbationManager(this);
                 ahegaoManager = new AhegaoManager(this);
                 kupaManager = new KupaManager(this);
-                tnpManager = new TNPManager(this);
 
                 // Harmony
                 Harmony.CreateAndPatchAll(typeof(YotogiCamControl));
@@ -359,7 +357,6 @@ namespace COM3D2.YotogiCamControl.Plugin
                 case 10: masturbationManager.DrawUI(); break;
                 case 11: ahegaoManager.DrawUI(); break;
                 case 12: kupaManager.DrawUI(); break;
-                case 13: tnpManager.DrawUI(); break;
             }
 
             GUILayout.EndScrollView();
