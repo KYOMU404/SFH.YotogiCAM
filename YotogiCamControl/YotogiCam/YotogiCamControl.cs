@@ -74,6 +74,7 @@ namespace COM3D2.YotogiCamControl.Plugin
         private PropertyInfo saturationProp;
         private FieldInfo redChannelField, greenChannelField, blueChannelField;
         private MethodInfo updateTexturesMethod;
+        private bool reflectionInitialized = false;
 
         // Screens
         private bool showScreens = true;
@@ -244,8 +245,8 @@ namespace COM3D2.YotogiCamControl.Plugin
 
                 UpdateLookAt();
 
-                // Animation Speed & Ahe Morph
-                if (syncAnimationSpeed && GameMain.Instance != null && GameMain.Instance.CharacterMgr != null)
+                // Centralized Maid Update Loop
+                if (GameMain.Instance != null && GameMain.Instance.CharacterMgr != null)
                 {
                     CharacterMgr charMgr = GameMain.Instance.CharacterMgr;
                     for (int i = 0; i < charMgr.GetMaidCount(); i++)
@@ -253,25 +254,33 @@ namespace COM3D2.YotogiCamControl.Plugin
                         Maid m = charMgr.GetMaid(i);
                         if (m != null && m.Visible && m.body0 != null)
                         {
-                            var anim = m.body0.GetAnimation();
-                            if (anim != null && m.body0.LastAnimeFN != null && anim[m.body0.LastAnimeFN] != null)
+                            // Animation Speed
+                            if (syncAnimationSpeed)
                             {
-                                anim[m.body0.LastAnimeFN].speed = animationSpeed / 100f;
-                            }
-
-                            // Ahe Morph Logic: 100 speed = 0, 130 speed = 30 (mapped to 0.3)
-                            if (animationSpeed >= 100f)
-                            {
-                                float aheVal = (animationSpeed - 100f) / 100f;
-                                if (m.body0.Face != null && m.body0.Face.morph != null)
+                                var anim = m.body0.GetAnimation();
+                                if (anim != null && m.body0.LastAnimeFN != null && anim[m.body0.LastAnimeFN] != null)
                                 {
-                                    TMorph morph = m.body0.Face.morph;
-                                    if (morph.hash.ContainsKey("ahe"))
+                                    anim[m.body0.LastAnimeFN].speed = animationSpeed / 100f;
+                                }
+
+                                // Ahe Morph Logic
+                                if (animationSpeed >= 100f)
+                                {
+                                    float aheVal = (animationSpeed - 100f) / 100f;
+                                    if (m.body0.Face != null && m.body0.Face.morph != null)
                                     {
-                                        morph.SetBlendValues((int)morph.hash["ahe"], aheVal);
+                                        TMorph morph = m.body0.Face.morph;
+                                        if (morph.hash.ContainsKey("ahe"))
+                                        {
+                                            morph.SetBlendValues((int)morph.hash["ahe"], aheVal);
+                                        }
                                     }
                                 }
                             }
+
+                            // Update Managers per Maid
+                            if (ahegaoManager != null) ahegaoManager.Update(i, m);
+                            if (kupaManager != null) kupaManager.Update(i, m);
                         }
                     }
                 }
@@ -283,8 +292,6 @@ namespace COM3D2.YotogiCamControl.Plugin
                 if (lutManager != null) lutManager.Update();
                 if (faceManager != null) faceManager.Update();
                 if (masturbationManager != null) masturbationManager.Update();
-                if (ahegaoManager != null) ahegaoManager.Update();
-                if (kupaManager != null) kupaManager.Update();
 
                 NotificationManager.Update();
             }
@@ -1143,7 +1150,7 @@ namespace COM3D2.YotogiCamControl.Plugin
 
             if (GameMain.Instance.MainCamera != null)
             {
-                if (colorCorrection == null)
+                if (!reflectionInitialized)
                 {
                     Component[] components = GameMain.Instance.MainCamera.GetComponents<MonoBehaviour>();
                     foreach (var c in components)
@@ -1160,6 +1167,7 @@ namespace COM3D2.YotogiCamControl.Plugin
                             break;
                         }
                     }
+                    reflectionInitialized = true;
                 }
 
                 if (colorCorrection != null)

@@ -60,17 +60,11 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
             this.plugin = plugin;
         }
 
-        public void Update()
+        public void Update(int index, Maid m)
         {
-            if (GameMain.Instance == null || GameMain.Instance.CharacterMgr == null) return;
-
-            for (int i = 0; i < GameMain.Instance.CharacterMgr.GetMaidCount(); i++)
+            if (m != null && m.Visible && m.body0 != null && m.body0.isLoadedBody)
             {
-                Maid m = GameMain.Instance.CharacterMgr.GetMaid(i);
-                if (m != null && m.Visible && m.body0 != null && m.body0.isLoadedBody)
-                {
-                    UpdateMaid(i, m);
-                }
+                UpdateMaid(index, m);
             }
         }
 
