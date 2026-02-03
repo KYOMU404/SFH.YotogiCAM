@@ -1295,7 +1295,7 @@ namespace COM3D2.YotogiCamControl.Plugin
                 CommonCommandData commonData = new CommonCommandData(command_data);
 
                 // Get the active maid. YotogiManager.instans.play_mgr.maid_ is typically the main maid involved in yotogi.
-                Maid activeMaid = YotogiManager.instans.play_mgr.maid_;
+                Maid activeMaid = AccessTools.Field(typeof(YotogiPlayManager), "maid_").GetValue(YotogiManager.instans.play_mgr) as Maid;
 
                 if (activeMaid != null)
                 {

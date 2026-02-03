@@ -213,7 +213,7 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
                     state.iOrgasmCount++;
 
                     // Face Anime
-                    m.FaceAnime(YotogiSliderConstants.sAheOrgasmFace[idx], 5f, 0);
+                    maid.FaceAnime(YotogiSliderConstants.sAheOrgasmFace[idx], 5f, 0);
                 }
             }
             else

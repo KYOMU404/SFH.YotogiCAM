@@ -162,7 +162,7 @@ namespace COM3D2.YotogiCamControl.Plugin.Managers
         {
             if (m.body0 == null) return;
             // Assuming we check slot 0 (body) for morphs
-            var slot = m.body0.GetGoSlot(0);
+
             // Note: GetGoSlot is extension or native. TBodyExtensions provides it.
             // But TBodyExtensions from YotogiSlider was not strictly ported, I implemented EnumerateGoSlot.
             // I'll use EnumerateGoSlot to find morphs.
